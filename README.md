@@ -1,5 +1,7 @@
 # Cloudcore Astro Frontend
 
+![CI](https://github.com/cloudcore-cms/cloudcore-astro/actions/workflows/ci.yml/badge.svg)
+
 An Astro starter for [Cloudcore CMS](https://github.com/cloudcore-cms/cloudcore-cms). Static site generation with zero JavaScript shipped by default.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cloudcore-cms/cloudcore-astro)
