@@ -1,0 +1,152 @@
+---
+import type { ContentBlock } from '../lib/api';
+import { getMediaUrl } from '../lib/api';
+
+interface Props {
+  blocks: ContentBlock[];
+}
+
+const { blocks } = Astro.props;
+---
+
+<div class="content-blocks">
+  {blocks.map((block) => {
+    switch (block.type) {
+      case 'paragraph':
+        return <p class="mb-4">{block.value}</p>;
+
+      case 'heading':
+        const level = (block.options?.level as number) || 2;
+        const HeadingTag = `h${level}` as keyof HTMLElementTagNameMap;
+        const headingClasses = {
+          1: 'text-4xl font-bold mb-6',
+          2: 'text-3xl font-bold mb-5',
+          3: 'text-2xl font-bold mb-4',
+          4: 'text-xl font-semibold mb-3',
+          5: 'text-lg font-semibold mb-2',
+          6: 'text-base font-semibold mb-2',
+        }[level] || 'text-2xl font-bold mb-4';
+        return <HeadingTag class={headingClasses}>{block.value}</HeadingTag>;
+
+      case 'quote':
+        return (
+          <blockquote class="border-l-4 border-gray-300 pl-4 py-2 mb-4 italic text-gray-700">
+            <p>{block.value}</p>
+            {block.options?.citation && (
+              <cite class="block mt-2 text-sm text-gray-500">
+                — {block.options.citation}
+              </cite>
+            )}
+          </blockquote>
+        );
+
+      case 'richtext':
+        return <div class="prose max-w-none mb-4" set:html={block.value} />;
+
+      case 'image':
+        const imageUrl = block.mediaId ? getMediaUrl(block.mediaId) : '';
+        const imageSize = block.options?.size || 'large';
+        const sizeClasses = {
+          small: 'max-w-sm',
+          medium: 'max-w-lg',
+          large: 'max-w-2xl',
+          full: 'w-full',
+        }[imageSize as string] || 'max-w-2xl';
+        return (
+          <figure class={`mb-6 ${sizeClasses}`}>
+            {imageUrl && <img src={imageUrl} alt={block.options?.alt as string || ''} class="rounded-lg" />}
+            {block.options?.caption && (
+              <figcaption class="mt-2 text-sm text-gray-500 text-center">
+                {block.options.caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+
+      case 'gallery':
+        const columns = (block.options?.columns as number) || 3;
+        return (
+          <div class={`grid grid-cols-${columns} gap-4 mb-6`}>
+            {block.mediaIds?.map((mediaId) => (
+              <img
+                src={getMediaUrl(mediaId)}
+                alt=""
+                class="rounded-lg w-full h-48 object-cover"
+              />
+            ))}
+          </div>
+        );
+
+      case 'video':
+        const videoUrl = block.value;
+        // Handle YouTube/Vimeo embeds
+        if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+          const videoId = videoUrl.includes('youtu.be')
+            ? videoUrl.split('/').pop()
+            : new URL(videoUrl).searchParams.get('v');
+          return (
+            <div class="aspect-video mb-6">
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}`}
+                class="w-full h-full rounded-lg"
+                allowfullscreen
+              />
+            </div>
+          );
+        }
+        return (
+          <video
+            src={videoUrl}
+            controls
+            autoplay={block.options?.autoplay as boolean}
+            class="w-full rounded-lg mb-6"
+          />
+        );
+
+      case 'button':
+        const buttonStyle = block.options?.style || 'primary';
+        const buttonClasses = {
+          primary: 'bg-blue-600 text-white hover:bg-blue-700',
+          secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
+          outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',
+        }[buttonStyle as string] || 'bg-blue-600 text-white hover:bg-blue-700';
+        return (
+          <a
+            href={block.options?.url as string}
+            target={block.options?.openInNewTab ? '_blank' : undefined}
+            rel={block.options?.openInNewTab ? 'noopener noreferrer' : undefined}
+            class={`inline-block px-6 py-3 rounded-lg font-medium transition-colors mb-4 ${buttonClasses}`}
+          >
+            {block.value}
+          </a>
+        );
+
+      case 'spacer':
+        const spacerSizes = { sm: 'h-4', md: 'h-8', lg: 'h-12', xl: 'h-16' } as const;
+        type SpacerKey = keyof typeof spacerSizes;
+        const spacerSize = ((block.options?.size as string) || 'md') as SpacerKey;
+        return <div class={spacerSizes[spacerSize] || 'h-8'} />;
+
+      case 'divider':
+        return <hr class="border-t border-gray-200 my-8" />;
+
+      case 'html':
+        return <div class="mb-4" set:html={block.value} />;
+
+      case 'code':
+        return (
+          <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4">
+            <code class={`language-${block.options?.language || 'text'}`}>
+              {block.value}
+            </code>
+          </pre>
+        );
+
+      case 'embed':
+        return <div class="mb-6" set:html={block.value} />;
+
+      default:
+        return <div class="mb-4 p-4 bg-gray-100 rounded">{block.value}</div>;
+    }
+  })}
+</div>

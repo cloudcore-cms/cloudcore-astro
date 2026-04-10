@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import BlockRenderer from '../components/BlockRenderer.astro';
+import { getPageBySlug, getPosts } from '../lib/api';
+
+// Get homepage content (if exists)
+const homepage = await getPageBySlug('home').catch(() => null);
+
+// Get recent posts
+const { items: posts } = await getPosts(3).catch(() => ({ items: [] }));
+---
+
+<Base>
+  <div class="max-w-5xl mx-auto px-4 py-12">
+    {homepage ? (
+      <BlockRenderer blocks={homepage.blocks} />
+    ) : (
+      <div class="text-center py-12">
+        <h1 class="text-4xl font-bold mb-4">Welcome to Cloudcore</h1>
+        <p class="text-xl text-gray-600 mb-8">
+          Your headless CMS is ready. Create a page with slug "home" to customize this content.
+        </p>
+      </div>
+    )}
+
+    {posts.length > 0 && (
+      <section class="mt-16">
+        <h2 class="text-2xl font-bold mb-8">Recent Posts</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {posts.map((post) => (
+            <article class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+              <div class="p-6">
+                <h3 class="text-lg font-semibold mb-2">
+                  <a href={`/blog/${post.slug}`} class="hover:text-blue-600">
+                    {post.title}
+                  </a>
+                </h3>
+                <p class="text-sm text-gray-500">
+                  {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div class="text-center mt-8">
+          <a href="/blog" class="text-blue-600 hover:underline">View all posts →</a>
+        </div>
+      </section>
+    )}
+  </div>
+</Base>

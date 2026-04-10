@@ -1,0 +1,6 @@
+# Cloudflare Pages deployment
+name = "cloudcore-astro"
+pages_build_output_dir = "dist"
+
+[vars]
+PUBLIC_CMS_URL = "" # Set to your CMS API URL (e.g., "https://cloudcore-cms.yourname.workers.dev/api/v1")

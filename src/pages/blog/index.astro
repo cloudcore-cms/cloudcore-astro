@@ -1,0 +1,97 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getPosts, getCategories } from '../../lib/api';
+
+const { items: posts, pagination } = await getPosts(20).catch(() => ({
+  items: [],
+  pagination: { total: 0, limit: 20, offset: 0 }
+}));
+const categories = await getCategories().catch(() => []);
+---
+
+<Base title="Blog">
+  <div class="max-w-5xl mx-auto px-4 py-12">
+    <h1 class="text-4xl font-bold mb-8">Blog</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Posts -->
+      <div class="lg:col-span-3">
+        {posts.length === 0 ? (
+          <p class="text-gray-500">No posts yet. Check back soon!</p>
+        ) : (
+          <div class="space-y-8">
+            {posts.map((post) => (
+              <article class="border-b border-gray-200 pb-8">
+                <h2 class="text-2xl font-bold mb-2">
+                  <a href={`/blog/${post.slug}`} class="hover:text-blue-600">
+                    {post.title}
+                  </a>
+                </h2>
+                <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <time datetime={post.publishedAt || post.createdAt}>
+                    {new Date(post.publishedAt || post.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </time>
+                  {post.categories && post.categories.length > 0 && (
+                    <span>
+                      in{' '}
+                      {post.categories.map((cat, i) => (
+                        <>
+                          <a href={`/blog/category/${cat.slug}`} class="hover:text-blue-600">
+                            {cat.name}
+                          </a>
+                          {i < (post.categories?.length ?? 0) - 1 && ', '}
+                        </>
+                      ))}
+                    </span>
+                  )}
+                </div>
+                {/* Show first paragraph as excerpt */}
+                {(() => {
+                  const firstParagraph = post.blocks.find((b) => b.type === 'paragraph');
+                  return firstParagraph ? (
+                    <p class="text-gray-600">
+                      {firstParagraph.value.slice(0, 200)}
+                      {firstParagraph.value.length > 200 && '...'}
+                    </p>
+                  ) : null;
+                })()}
+                <a href={`/blog/${post.slug}`} class="text-blue-600 hover:underline text-sm mt-4 inline-block">
+                  Read more →
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination.total > pagination.limit && (
+          <div class="mt-8 flex justify-center gap-2">
+            {/* Add pagination controls as needed */}
+          </div>
+        )}
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="lg:col-span-1">
+        {categories.length > 0 && (
+          <div class="mb-8">
+            <h3 class="font-bold text-lg mb-4">Categories</h3>
+            <ul class="space-y-2">
+              {categories.map((cat) => (
+                <li>
+                  <a href={`/blog/category/${cat.slug}`} class="text-gray-600 hover:text-blue-600">
+                    {cat.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
+</Base>
